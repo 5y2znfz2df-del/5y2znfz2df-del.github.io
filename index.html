@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>GESP C++编程学习平台</title>
+ <style>
+ * {
+ margin: 0;
+ padding: 0;
+ box-sizing: border-box;
+ font-family: "Microsoft YaHei", -apple-system, sans-serif;
+ }
+ :root {
+ --glass-bg: rgba(255, 255, 255, 0.12);
+ --glass-dark: rgba(30, 30, 40, 0.3);
+ --glass-blur: blur(16px);
+ --border-light: rgba(255, 255, 255, 0.2);
+ --border-dark: rgba(255, 255, 255, 0.08);
+ --shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+ --shadow-hover: 0 14px 48px rgba(0, 0, 0, 0.2);
+ --primary: #4f46e5;
+ --primary-light: #818cf8;
+ --primary-glow: rgba(79, 70, 229, 0.3);
+ --text-light: #f1f5f9;
+ --text-muted: #94a3b8;
+ --text-dark: #1e293b;
+ --card-radius: 16px;
+ --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+ }
+ body {
+ min-height: 100vh;
+ background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+ background-attachment: fixed;
+ color: var(--text-light);
+ transition: background 0.5s ease;
+ overflow-x: hidden;
+ }
+ body.light-mode {
+ background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 50%, #c7d2fe 100%);
+ color: var(--text-dark);
+ --glass-bg: rgba(255, 255, 255, 0.5);
+ --glass-dark: rgba(255, 255, 255, 0.65);
+ --border-light: rgba(255, 255, 255, 0.5);
+ --text-muted: #64748b;
+ }
+ /* 玻璃卡片 */
+ .glass {
+ background: var(--glass-bg);
+ backdrop-filter: var(--glass-blur);
+ -webkit-backdrop-filter: var(--glass-blur);
+ border: 1px solid var(--border-light);
+ border-radius: var(--card-radius);
+ box-shadow: var(--shadow);
+ padding: 20px;
+ margin-bottom: 18px;
+ transition: var(--transition);
+ }
+ .glass:hover {
+ transform: translateY(-3px);
+ box-shadow: var(--shadow-hover);
+ }
+ /* 顶部导航 */
+ header {
+ position: sticky;
+ top: 0;
+ z-index: 999;
+ height: 64px;
+ display: flex;
+ align-items: center;
+ padding: 0 24px;
+ gap: 6px;
+ background: var(--glass-dark);
+ backdrop-filter: var(--glass-blur);
+ border-bottom: 1px solid var(--border-dark);
+ overflow-x: auto;
+ }
+ header::-webkit-scrollbar { height: 0; }
+ .logo {
+ font-size: 18px;
+ font-weight: 700;
+ white-space: nowrap;
+ background: linear-gradient(135deg, #818cf8, #c084fc);
+ -webkit-background-clip: text;
+ -webkit-text-fill-color: transparent;
+ margin-right: 16px;
+ }
+ .nav-item {
+ height: 100%;
+ display: flex;
+ align-items: center;
+ padding: 0 14px;
+ cursor: pointer;
+ border-radius: 10px;
+ transition: var(--transition);
+ white-space: nowrap;
+ font-size: 14px;
+ position: relative;
+ }
+ .nav-item:hover {
+ background: rgba(255, 255, 255, 0.1);
+ }
+ .nav-item.active::after {
+ content: '';
+ position: absolute;
+ bottom: 0;
+ left: 50%;
+ transform: translateX(-50%);
+ width: 20px;
+ height: 3px;
+ background: var(--primary-light);
+ border-radius: 3px 3px 0 0;
+ }
+ .container {
+ max-width: 1440px;
+ margin: 24px auto;
+ padding: 0 20px;
+ }
+ button {
+ padding: 9px 20px;
+ border: 1px solid var(--border-light);
+ border-radius: 10px;
+ background: linear-gradient(135deg, var(--primary), var(--primary-light));
+ color: #fff;
+ cursor: pointer;
+ font-size: 14px;
+ transition: var(--transition);
+ box-shadow: 0 2px 10px var(--primary-glow);
+ }
+ button:hover {
+ opacity: 0.92;
+ transform: translateY(-1px);
+ box-shadow: 0 4px 20px var(--primary-glow);
+ }
+ button:active {
+ transform: scale(0.97);
+ }
+ input, textarea, select {
+ width: 100%;
+ padding: 11px 14px;
+ margin: 8px 0;
+ border-radius: 10px;
+ border: 1px solid var(--border-light);
+ background: var(--glass-bg);
+ backdrop-filter: var(--glass-blur);
+ color: inherit;
+ outline: none;
+ font-size: 14px;
+ transition: var(--transition);
+ }
+ input:focus, textarea:focus {
+ border-color: var(--primary-light);
+ box-shadow: 0 0 0 3px var(--primary-glow);
+ }
+ textarea {
+ resize: vertical;
+ min-height: 80px;
+ }
+ .hide { display: none !important; }
+ /* 动画 */
+ @keyframes fadeIn {
+ from { opacity: 0; transform: translateY(12px); }
+ to { opacity: 1; transform: translateY(0); }
+ }
+ .page-enter {
+ animation: fadeIn 0.35s ease forwards;
+ }
+ .tab-bar {
+ display: flex;
+ gap: 8px;
+ margin: 12px 0;
+ flex-wrap: wrap;
+ }
+ .tab {
+ padding: 7px 16px;
+ border-radius: 20px;
+ background: var(--glass-bg);
+ border: 1px solid var(--border-light);
+ cursor: pointer;
+ font-size: 13px;
+ transition: var(--transition);
+ }
+ .tab:hover {
+ background: rgba(255, 255, 255, 0.08);
+ }
+ .tab.active {
+ background: linear-gradient(135deg, var(--primary), var(--primary-light));
+ color: #fff;
+ border-color: transparent;
+ }
+ .ide-box {
+ min-height: 360px;
+ font-family: 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace;
+ font-size: 14px;
+ line-height: 1.6;
+ tab-size: 4;
+ }
+ .shop-item {
+ display: inline-block;
+ width: 190px;
+ padding: 20px 16px;
+ margin: 10px;
+ text-align: center;
+ }
+ .rank-tag {
+ display: inline-block;
+ padding: 4px 14px;
+ background: linear-gradient(135deg, #f59e0b, #fbbf24);
+ border-radius: 20px;
+ color: #000;
+ font-weight: 700;
+ font-size: 13px;
+ }
+ .discuss-item {
+ border-left: 3px solid var(--primary-light);
+ padding: 14px 18px;
+ margin: 12px 0;
+ }
+ h2, h3, h4 {
+ margin-bottom: 10px;
+ font-weight: 600;
+ }
+ h2 { font-size: 22px; }
+ h3 { font-size: 18px; }
+ h4 { font-size: 15px; }
+ .badge {
+ display: inline-block;
+ padding: 2px 10px;
+ border-radius: 12px;
+ font-size: 12px;
+ background: rgba(79, 70, 229, 0.3);
+ color: var(--text-light);
+ }
+ .toast {
+ position: fixed;
+ bottom: 30px;
+ left: 50%;
+ transform: translateX(-50%);
+ padding: 12px 28px;
+ border-radius: 12px;
+ background: var(--glass-dark);
+ backdrop-filter: var(--glass-blur);
+ border: 1px solid var(--border-light);
+ color: var(--text-light);
+ z-index: 9999;
+ opacity: 0;
+ transition: opacity 0.3s, transform 0.3s;
+ pointer-events: none;
+ }
+ .toast.show {
+ opacity: 1;
+ transform: translateX(-50%) translateY(0);
+ }
+ /* 模态框 */
+ .modal-overlay {
+ position: fixed;
+ inset: 0;
+ background: rgba(0,0,0,0.4);
+ backdrop-filter: blur(4px);
+ z-index: 1000;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ opacity: 0;
+ pointer-events: none;
+ transition: opacity 0.3s;
+ }
+ .modal-overlay.show {
+ opacity: 1;
+ pointer-events: auto;
+ }
+ .modal-box {
+ width: 90%;
+ max-width: 420px;
+ padding: 28px;
+ }
+ /* IDE 行号 */
+ .ide-wrapper {
+ position: relative;
+ overflow: hidden;
+ border-radius: 10px;
+ border: 1px solid var(--border-light);
+ background: rgba(0,0,0,0.2);
+ }
+ .ide-wrapper .line-numbers {
+ position: absolute;
+ top: 0;
+ left: 0;
+ width: 40px;
+ padding: 11px 0;
+ text-align: right;
+ color: var(--text-muted);
+ font-family: 'Cascadia Code', 'Consolas', monospace;
+ font-size: 14px;
+ line-height: 1.6;
+ user-select: none;
+ opacity: 0.4;
+ }
+ .ide-wrapper textarea {
+ margin: 0;
+ border: none;
+ padding-left: 52px;
+ min-height: 360px;
+ background: transparent;
+ resize: vertical;
+ }
+ /* 响应式 */
+ @media (max-width: 768px) {
+ header { padding: 0 12px; gap: 2px; }
+ .logo { font-size: 15px; margin-right: 8px; }
+ .nav-item { padding: 0 8px; font-size: 13px; }
+ .container { padding: 0 12px; }
+ .shop-item { width: 100%; margin: 8px 0; }
+ }
+ </style>
+</head>
+<body>
+<header>
+ <div class="logo">🧩 GESP编程</div>
+ <div class="nav-item active" onclick="switchPage('home')">🏠 主页</div>
+ <div class="nav-item" onclick="switchPage('problem')">📚 题库</div>
+ <div class="nav-item" onclick="switchPage('discuss')">💬 讨论</div>
+ <div class="nav-item" onclick="switchPage('user')">👤 个人</div>
+ <div class="nav-item" onclick="switchPage('class')">🏫 班级</div>
+ <div class="nav-item" onclick="switchPage('shop')">🛍️ 商店</div>
+ <div class="nav-item" onclick="switchPage('ide')">💻 IDE</div>
+ <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-shrink:0">
+ <button onclick="toggleLight()" style="padding:6px 14px;font-size:13px">🌓 主题</button>
+ <div id="loginBtnBox">
+ <button onclick="openLogin()" style="padding:6px 14px;font-size:13px">登录</button>
+ </div>
+ <div id="userInfoBox" class="hide" style="display:inline-flex;align-items:center;gap:8px">
+ <span id="userName" style="font-size:14px;font-weight:600"></span>
+ <span id="userScoreBadge" class="badge"></span>
+ <button onclick="logout()" style="padding:5px 12px;font-size:12px">退出</button>
+ </div>
+ </div>
+</header>
+
+<div class="container" id="app">
+ <!-- 登录弹窗 -->
+ <div class="modal-overlay" id="loginModal">
+ <div class="modal-box glass">
+ <h3 style="margin-bottom:16px">🔐 账号登录</h3>
+ <div class="tab-bar">
+ <div class="tab active" onclick="loginTab(0)">登录</div>
+ <div class="tab" onclick="loginTab(1)">注册</div>
+ </div>
+ <div id="loginPanel">
+ <input placeholder="用户名" id="loginUser" autocomplete="username">
+ <input placeholder="密码" type="password" id="loginPwd" autocomplete="current-password">
+ <button onclick="doLogin()" style="width:100%;margin-top:8px">登录</button>
+ </div>
+ <div id="regPanel" class="hide">
+ <input placeholder="用户名" id="regUser" autocomplete="off">
+ <input placeholder="密码" type="password" id="regPwd" autocomplete="new-password">
+ <button onclick="doRegister()" style="width:100%;margin-top:8px">注册</button>
+ </div>
+ <button onclick="closeLogin()" style="width:100%;margin-top:10px;background:transparent;border:1px solid var(--border-light);color:inherit">取消</button>
+ </div>
+ </div>
+
+ <!-- 主页 -->
+ <div id="page-home" class="page-enter">
+ <div class="glass" style="text-align:center;padding:32px">
+ <h2>🚀 GESP C++编程学习平台</h2>
+ <p style="color:var(--text-muted);margin-bottom:16px">从青铜到辐射，刷题进阶，与同学一起成长</p>
+ <div id="clockTip" style="font-size:15px;margin-bottom:10px">今日未打卡，打卡可获得 50 积分</div>
+ <button onclick="dailyClock()" id="clockBtn">✅ 立即打卡</button>
+ </div>
+ <div class="glass">
+ <h3>📌 推荐题目</h3>
+ <div id="recomProblemList"></div>
+ </div>
+ <div class="glass">
+ <h3>📊 平台数据</h3>
+ <p>注册用户：<span id="totalUsers">0</span> 人 · 总帖子：<span id="totalPosts">0</span></p>
+ </div>
+ </div>
+
+ <!-- 题库 -->
+ <div id="page-problem" class="hide">
+ <h3>📚 GESP题库（1~8级 + 历年真题）</h3>
+ <div class="tab-bar" id="gespTabBar"></div>
+ <div id="problemListBox"></div>
+ </div>
+
+ <!-- 讨论区 -->
+ <div id="page-discuss" class="hide">
+ <h3>💬 讨论广场</h3>
+ <div class="tab-bar" id="discussTabBar">
+ <div class="tab active" data-type="all" onclick="filterDiscuss('all')">全部</div>
+ <div class="tab" data-type="chat" onclick="filterDiscuss('chat')">💭 闲聊</div>
+ <div class="tab" data-type="help" onclick="filterDiscuss('help')">🙋 求助</div>
+ <div class="tab" data-type="solve" onclick="filterDiscuss('solve')">💡 解题分享</div>
+ </div>
+ <div class="glass">
+ <h4>📝 发布帖子</h4>
+ <input placeholder="标题" id="postTitle">
+ <select id="postTypeSelect">
+ <option value="chat">💭 闲聊</option>
+ <option value="help">🙋 求助</option>
+ <option value="solve">💡 解题分享</option>
+ </select>
+ <textarea placeholder="内容" id="postContent"></textarea>
+ <button onclick="publishPost()">发布帖子</button>
+ </div>
+ <div id="discussList"></div>
+ </div>
+
+ <!-- 个人中心 -->
+ <div id="page-user" class="hide">
+ <div class="glass">
+ <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+ <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-light));display:flex;align-items:center;justify-content:center;font-size:24px" id="userAvatar">🧑</div>
+ <div>
+ <h3 style="margin:0" id="userDisplayName"></h3>
+ <p style="color:var(--text-muted);font-size:13px">段位：<span class="rank-tag" id="userRank"></span></p>
+ </div>
+ <div style="margin-left:auto;text-align:right">
+ <p style="font-size:24px;font-weight:700" id="userScore">0</p>
+ <p style="color:var(--text-muted);font-size:12px">总积分</p>
+ </div>
+ </div>
+ </div>
+ <div class="glass">
+ <h4>✍️ 个性签名</h4>
+ <textarea id="userSign" placeholder="写点什么…"></textarea>
+ <button onclick="saveSign()">保存</button>
+ </div>
+ <div class="glass">
+ <h4>📓 我的笔记</h4>
+ <textarea placeholder="新建笔记内容" id="noteContent"></textarea>
+ <div style="margin:8px 0;display:flex;gap:16px">
+ <label><input type="radio" name="noteVis" value="public" checked> 公开</label>
+ <label><input type="radio" name="noteVis" value="private"> 私密</label>
+ </div>
+ <button onclick="addNote()">保存笔记</button>
+ <div id="noteList"></div>
+ </div>
+ </div>
+
+ <!-- 班级管理 -->
+ <div id="page-class" class="hide">
+ <h3>🏫 班级中心</h3>
+ <div id="superAdminOpt" class="glass hide">
+ <h4>⚙️ 班级管理后台</h4>
+ <div style="display:flex;gap:8px;flex-wrap:wrap">
+ <input placeholder="班级名称" id="createClassName" style="flex:1;min-width:120px">
+ <button onclick="createClass()">创建班级</button>
+ </div>
+ <p style="margin-top:12px;font-size:14px;color:var(--text-muted)">分配管理员：</p>
+ <div style="display:flex;gap:8px;flex-wrap:wrap">
+ <input placeholder="用户名称" id="assignAdminUser" style="flex:1;min-width:120px">
+ <select id="classSelectAssign" style="flex:1;min-width:120px"></select>
+ <button onclick="assignClassAdmin()">分配</button>
+ </div>
+ </div>
+ <div id="classAdminOpt" class="glass hide">
+ <h4>📋 管理员功能</h4>
+ <button onclick="createTrain()">创建训练/比赛</button>
+ </div>
+ <h4 style="margin-top:12px">已有班级</h4>
+ <div id="classList"></div>
+ </div>
+
+ <!-- 积分商店 -->
+ <div id="page-shop" class="hide">
+ <h3>🛍️ 积分商店</h3>
+ <div style="display:flex;flex-wrap:wrap;gap:12px">
+ <div class="glass shop-item">
+ <div style="font-size:32px;margin-bottom:8px">🌙</div>
+ <h4>深色IDE背景</h4>
+ <p style="font-size:12px;color:var(--text-muted)">200 积分</p>
+ <button onclick="buyItem('dark')" style="margin-top:8px">购买</button>
+ </div>
+ <div class="glass shop-item">
+ <div style="font-size:32px;margin-bottom:8px">🌈</div>
+ <h4>彩虹答题特效</h4>
+ <p style="font-size:12px;color:var(--text-muted)">500 积分</p>
+ <button onclick="buyItem('effect1')" style="margin-top:8px">购买</button>
+ </div>
+ <div class="glass shop-item">
+ <div style="font-size:32px;margin-bottom:8px">✨</div>
+ <h4>星空IDE背景</h4>
+ <p style="font-size:12px;color:var(--text-muted)">800 积分</p>
+ <button onclick="buyItem('star')" style="margin-top:8px">购买</button>
+ </div>
+ </div>
+ <div class="glass">
+ <h4>🎒 已拥有</h4>
+ <div id="ownShopList">还没有道具哦</div>
+ </div>
+ </div>
+
+ <!-- IDE -->
+ <div id="page-ide" class="hide">
+ <div class="glass" style="padding:16px">
+ <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+ <h3 style="margin:0;flex:1">💻 C++在线IDE</h3>
+ <select id="compilerSelect" style="width:auto;padding:6px 12px;margin:0">
+ <option>Visual Studio C++</option>
+ <option>DEV-C++ MinGW</option>
+ </select>
+ </div>
+ <div class="ide-wrapper">
+ <div class="line-numbers" id="lineNumbers">1</div>
+ <textarea class="ide-box" id="codeEditor" spellcheck="false" placeholder="在此编写C++代码">#include&lt;iostream&gt;
+using namespace std;
+int main() {
+    cout &lt;&lt; "Hello GESP!" &lt;&lt; endl;
+    return 0;
+}</textarea>
+ </div>
+ <button onclick="runCode()" style="margin-top:12px;width:100%">▶ 运行 & 判分</button>
+ <div id="codeOutput" class="glass" style="margin-top:12px;min-height:60px;display:none">
+ <h4>📟 运行结果</h4>
+ <pre id="codeOutputText" style="font-family:monospace;font-size:14px;white-space:pre-wrap"></pre>
+ </div>
+ </div>
+ </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ====== 配置 ======
+const SENSITIVE = ["脏话","辱骂","色情","赌博","外挂","暴力","刷单","翻墙"];
+const RANK_LIST = [
+ {min:0,name:"🥉 铁牌"},{min:100,name:"🥈 铜牌"},{min:300,name:"🥇 银牌"},
+ {min:500,name:"🏅 金牌"},{min:800,name:"💎 铂金"},{min:1200,name:"🔷 钻石"},
+ {min:1800,name:"🔥 超凡"},{min:2500,name:"👑 不朽"},{min:3500,name:"☢️ 辐射"}
+];
+const SUPER_USER = {username:"FX",password:"fx123456",isSuper:true};
+
+// ====== Toast 提示 ======
+function toast(msg, duration=2500) {
+ const t = document.getElementById('toast');
+ t.textContent = msg;
+ t.classList.add('show');
+ setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ====== 存储 ======
+function initStorage(){
+ if(!localStorage.getItem("userData")) {
+ localStorage.setItem("userData",JSON.stringify([SUPER_USER]));
+ }
+ if(!localStorage.getItem("nowUser")) localStorage.setItem("nowUser","");
+ if(!localStorage.getItem("problemData")) initProblem();
+ if(!localStorage.getItem("discussData")) localStorage.setItem("discussData",JSON.stringify([]));
+ if(!localStorage.getItem("classData")) localStorage.setItem("classData",JSON.stringify([]));
+}
+initStorage();
+
+function initProblem(){
+ let list = [];
+ for(let lv=1;lv<=8;lv++){
+ for(let i=1;i<=50;i++) list.push({id:`G${lv}_${i}`,level:lv,type:"日常题",title:`GESP${lv} 练习题 ${i}`,point:10,testTotal:10});
+ for(let y=2020;y<=2026;y++) list.push({id:`G${lv}_ZK${y}`,level:lv,type:"历年真题",title:`GESP${lv} · ${y}考级真题`,point:20,testTotal:10});
+ }
+ localStorage.setItem("problemData",JSON.stringify(list));
+}
+
+function getUsers(){return JSON.parse(localStorage.getItem("userData"))}
+function saveUsers(arr){localStorage.setItem("userData",JSON.stringify(arr))}
+function getNowUser(){return localStorage.getItem("nowUser")}
+function setNowUser(name){localStorage.setItem("nowUser",name)}
+function getProblems(){return JSON.parse(localStorage.getItem("problemData"))}
+function getDiscuss(){return JSON.parse(localStorage.getItem("discussData"))}
+function saveDiscuss(arr){localStorage.setItem("discussData",JSON.stringify(arr))}
+function getClass(){return JSON.parse(localStorage.getItem("classData"))}
+function saveClass(arr){localStorage.setItem("classData",JSON.stringify(arr))}
+
+function checkSensitive(str){
+ for(let w of SENSITIVE) if(str.includes(w)) return false;
+ return true;
+}
+function getRank(score){
+ let r = RANK_LIST[0];
+ for(let item of RANK_LIST) if(score >= item.min) r=item;
+ return r.name;
+}
+
+// ====== 主题 ======
+function toggleLight(){
+ document.body.classList.toggle("light-mode");
+}
+
+// ====== 页面切换 ======
+let currentPage = 'home';
+function switchPage(page){
+ document.querySelectorAll('[id^="page-"]').forEach(el => {
+ el.classList.add('hide');
+ el.classList.remove('page-enter');
+ });
+ document.getElementById(`page-${page}`).classList.remove('hide');
+ document.getElementById(`page-${page}`).classList.add('page-enter');
+ document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+ document.querySelectorAll('.nav-item').forEach(el => {
+ if(el.textContent.includes('主页') && page==='home') el.classList.add('active');
+ if(el.textContent.includes('题库') && page==='problem') el.classList.add('active');
+ if(el.textContent.includes('讨论') && page==='discuss') el.classList.add('active');
+ if(el.textContent.includes('个人') && page==='user') el.classList.add('active');
+ if(el.textContent.includes('班级') && page==='class') el.classList.add('active');
+ if(el.textContent.includes('商店') && page==='shop') el.classList.add('active');
+ if(el.textContent.includes('IDE') && page==='ide') el.classList.add('active');
+ });
+ currentPage = page;
+ refreshPageData();
+}
+
+// ====== 登录弹窗 ======
+function openLogin(){document.getElementById('loginModal').classList.add('show')}
+function closeLogin(){document.getElementById('loginModal').classList.remove('show')}
+function loginTab(t){
+ document.querySelectorAll('#loginModal .tab').forEach((el,i)=>el.classList.toggle('active',i===t));
+ document.getElementById('loginPanel').classList.toggle('hide',t!==0);
+ document.getElementById('regPanel').classList.toggle('hide',t!==1);
+}
+function doLogin(){
+ const u = document.getElementById('loginUser').value.trim();
+ const p = document.getElementById('loginPwd').value.trim();
+ const users = getUsers();
+ const find = users.find(x=>x.username===u && x.password===p);
+ if(!find) return toast('❌ 账号或密码错误');
+ setNowUser(u);
+ closeLogin();
+ refreshPageData();
+ toast('✅ 登录成功，欢迎回来！');
+}
+function doRegister(){
+ const u = document.getElementById('regUser').value.trim();
+ const p = document.getElementById('regPwd').value.trim();
+ if(!u||!p) return toast('❌ 用户名和密码不能为空');
+ const users = getUsers();
+ if(users.find(x=>x.username===u)) return toast('❌ 该用户名已被注册');
+ users.push({
+ username:u,password:p,
+ sign:"这个人很懒，暂无签名",
+ score:0,notes:[],shop:["light"],
+ isSuper:false,manageClass:[]
+ });
+ saveUsers(users);
+ toast('✅ 注册完成，请登录');
+ loginTab(0);
+}
+function logout(){
+ setNowUser('');
+ refreshPageData();
+ toast('👋 已退出登录');
+}
+
+// ====== 每日打卡 ======
+function dailyClock(){
+ const un = getNowUser();
+ if(!un) return toast('❌ 请先登录');
+ const today = new Date().toDateString();
+ const key = `clock_${un}`;
+ if(localStorage.getItem(key) === today) return toast('⏰ 今天已打卡，明天再来吧！');
+ let users = getUsers();
+ const u = users.find(x=>x.username===un);
+ if(u) u.score += 50;
+ saveUsers(users);
+ localStorage.setItem(key, today);
+ refreshPageData();
+ toast('✅ 打卡成功！积分 +50 🎉');
+}
+
+// ====== 主页 ======
+function renderHomeRec(){
+ const all = getProblems().filter(p=>p.level>=4&&p.level<=5).slice(0,6);
+ const box = document.getElementById('recomProblemList');
+ box.innerHTML = all.map(item => `
+ <div class="glass" style="padding:14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+ <span>${item.title} <span class="badge">${item.type}</span></span>
+ <button onclick="openProblem('${item.id}')" style="padding:5px 14px;font-size:12px">做题</button>
+ </div>
+ `).join('');
+}
+
+// ====== 题库 ======
+function renderGespTab(){
+ const bar = document.getElementById('gespTabBar');
+ bar.innerHTML = '';
+ for(let i=1;i<=8;i++){
+ bar.innerHTML += `<div class="tab" onclick="filterGesp(${i})">GESP ${i}</div>`;
+ }
+ // 默认选第一个
+ filterGesp(1);
+}
+function filterGesp(lv){
+ const list = getProblems().filter(p=>p.level===lv);
+ const box = document.getElementById('problemListBox');
+ box.innerHTML = list.map(item => `
+ <div class="glass" style="padding:14px;margin-bottom:8px">
+ <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+ <div>
+ <h4 style="margin:0">${item.title}</h4>
+ <p style="font-size:12px;color:var(--text-muted);margin-top:4px">积分 ${item.point} · 测试点 ${item.testTotal}</p>
+ </div>
+ <button onclick="openProblem('${item.id}')">做题</button>
+ </div>
+ </div>
+ `).join('');
+ document.querySelectorAll('#gespTabBar .tab').forEach((el,i) => {
+ el.classList.toggle('active', i === lv-1);
+ });
+}
+function openProblem(pid){
+ toast('📝 请在IDE完成代码，运行后自动判分');
+ switchPage('ide');
+}
+
+// ====== 讨论区 ======
+let discussFilter = 'all';
+function filterDiscuss(type){
+ discussFilter = type;
+ document.querySelectorAll('#discussTabBar .tab').forEach(el => {
+ el.classList.toggle('active', el.dataset.type === type);
+ });
+ renderDiscuss();
+}
+function publishPost(){
+ const un = getNowUser();
+ if(!un) return toast('❌ 请先登录');
+ const title = document.getElementById('postTitle').value.trim();
+ const cont = document.getElementById('postContent').value.trim();
+ const type = document.getElementById('postTypeSelect').value;
+ if(!title||!cont) return toast('❌ 标题和内容不能为空');
+ if(!checkSensitive(title+cont)) return toast('❌ 内容包含违规词');
+ let dis = getDiscuss();
+ dis.unshift({
+ id:Date.now(),user:un,title,content:cont,type,
+ like:0,comment:[],time:new Date().toLocaleString()
+ });
+ saveDiscuss(dis);
+ document.getElementById('postTitle').value = '';
+ document.getElementById('postContent').value = '';
+ renderDiscuss();
+ toast('✅ 帖子已发布！');
+}
+function renderDiscuss(){
+ const dis = getDiscuss();
+ const filtered = discussFilter === 'all' ? dis : dis.filter(d => d.type === discussFilter);
+ const box = document.getElementById('discussList');
+ if(filtered.length === 0) {
+ box.innerHTML = '<div class="glass" style="text-align:center;color:var(--text-muted);padding:32px">📭 暂无帖子，快来发第一个吧！</div>';
+ return;
+ }
+ box.innerHTML = filtered.map(item => {
+ const typeLabel = {chat:'💭 闲聊',help:'🙋 求助',solve:'💡 解题分享'}[item.type] || '💬 帖子';
+ const comHtml = item.comment.map(c =>
+ `<div style="padding:8px 12px;margin:6px 0;background:var(--glass-bg);border-radius:8px;font-size:13px">
+ <strong>${c.user}</strong>：${c.msg}
+ </div>`
+ ).join('');
+ return `
+ <div class="glass discuss-item">
+ <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:8px">
+ <div>
+ <h4 style="margin:0">${item.title}</h4>
+ <p style="font-size:12px;color:var(--text-muted);margin:4px 0">
+ ${typeLabel} · ${item.user} · ${item.time}
+ </p>
+ </div>
+ <span style="font-size:13px">❤️ ${item.like}</span>
+ </div>
+ <p style="margin:8px 0;line-height:1.6">${item.content}</p>
+ <div style="margin:8px 0">
+ <button onclick="likePost(${item.id})" style="padding:4px 12px;font-size:12px">👍 点赞</button>
+ </div>
+ ${comHtml}
+ <div style="display:flex;gap:8px;margin-top:8px">
+ <input placeholder="评论…" id="c_${item.id}" style="margin:0;flex:1">
+ <button onclick="commentPost(${item.id})" style="padding:5px 14px;font-size:12px">发送</button>
+ </div>
+ </div>`;
+ }).join('');
+}
+function likePost(pid){
+ const un = getNowUser();
+ if(!un) return toast('❌ 登录后才能点赞');
+ let dis = getDiscuss();
+ const p = dis.find(x=>x.id===pid);
+ if(p) { p.like += 1; saveDiscuss(dis); renderDiscuss(); }
+}
+function commentPost(pid){
+ const un = getNowUser();
+ if(!un) return toast('❌ 请先登录');
+ const msg = document.getElementById(`c_${pid}`).value.trim();
+ if(!msg||!checkSensitive(msg)) return toast('❌ 评论不能为空或包含违规内容');
+ let dis = getDiscuss();
+ const p = dis.find(x=>x.id===pid);
+ if(p) {
+ p.comment.push({user:un,msg});
+ saveDiscuss(dis);
+ renderDiscuss();
+ }
+}
+
+// ====== 个人中心 ======
+function saveSign(){
+ const un = getNowUser();
+ const text = document.getElementById('userSign').value.trim();
+ let users = getUsers();
+ const u = users.find(x=>x.username===un);
+ if(u) { u.sign = text; saveUsers(users); toast('✅ 签名已保存'); }
+}
+function addNote(){
+ const un = getNowUser();
+ const cont = document.getElementById('noteContent').value.trim();
+ const vis = document.querySelector('input[name="noteVis"]:checked').value;
+ if(!cont) return toast('❌ 笔记不能为空');
+ let users = getUsers();
+ const u = users.find(x=>x.username===un);
+ if(u) {
+ u.notes.push({id:Date.now(),content:cont,visible:vis});
+ saveUsers(users);
+ document.getElementById('noteContent').value = '';
+ renderNote(u);
+ toast('✅ 笔记已保存');
+ }
+}
+function renderNote(user){
+ const box = document.getElementById('noteList');
+ if(!user.notes || user.notes.length === 0) {
+ box.innerHTML = '<p style="color:var(--text-muted);font-size:13px">还没有笔记</p>';
+ return;
+ }
+ box.innerHTML = user.notes.map(n =>
+ `<div class="glass" style="padding:12px;font-size:14px">
+ <span class="badge" style="margin-right:8px">${n.visible==='public'?'📖 公开':'🔒 私密'}</span>${n.content}
+ </div>`
+ ).join('');
+}
+
+// ====== 班级系统 ======
+function renderClassPanel(user){
+ const adminBox = document.getElementById('superAdminOpt');
+ adminBox.classList.toggle('hide', !user || !user.isSuper);
+ document.getElementById('classAdminOpt').classList.toggle('hide', !user || user.manageClass.length===0);
+ const sel = document.getElementById('classSelectAssign');
+ sel.innerHTML = getClass().map(c => `<option>${c.name}</option>`).join('');
+ const listBox = document.getElementById('classList');
+ const cls = getClass();
+ if(cls.length===0) {
+ listBox.innerHTML = '<div class="glass" style="text-align:center;color:var(--text-muted);padding:24px">📭 暂无班级</div>';
+ return;
+ }
+ listBox.innerHTML = cls.map(c => `
+ <div class="glass" style="padding:14px">
+ <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+ <div>
+ <h4 style="margin:0">🏫 ${c.name}</h4>
+ <p style="font-size:12px;color:var(--text-muted);margin:4px 0">管理员：${c.admin || '未分配'}</p>
+ </div>
+ <span class="badge">${c.train ? c.train.length : 0} 个活动</span>
+ </div>
+ </div>
+ `).join('');
+}
+function createClass(){
+ const name = document.getElementById('createClassName').value.trim();
+ if(!name) return toast('❌ 班级名称不能为空');
+ let cls = getClass();
+ cls.push({name,admin:'',train:[]});
+ saveClass(cls);
+ document.getElementById('createClassName').value = '';
+ refreshPageData();
+ toast('✅ 班级创建成功');
+}
+function assignClassAdmin(){
+ const cName = document.getElementById('classSelectAssign').value;
+ const aUser = document.getElementById('assignAdminUser').value.trim();
+ const users = getUsers();
+ if(!users.find(x=>x.username===aUser)) return toast('❌ 用户不存在');
+ let cls = getClass();
+ let target = cls.find(c=>c.name===cName);
+ if(target) {
+ target.admin = aUser;
+ let uItem = users.find(u=>u.username===aUser);
+ if(uItem) { uItem.manageClass.push(cName); saveUsers(users); }
+ saveClass(cls);
+ toast('✅ 管理员已分配');
+ refreshPageData();
+ }
+}
+function createTrain(){
+ toast('✅ 训练/比赛创建成功，班级成员可见');
+}
+
+// ====== 商店 ======
+function renderShop(user){
+ const ownBox = document.getElementById('ownShopList');
+ if(!user || !user.shop || user.shop.length === 0) {
+ ownBox.innerHTML = '还没有道具哦 🛍️';
+ } else {
+ ownBox.innerHTML = user.shop.map(s => {
+ const map = {dark:'🌙 深色IDE',effect1:'🌈 彩虹特效',star:'✨ 星空IDE',light:'☀️ 浅色主题'};
+ return `<span class="badge" style="margin-right:6px">${map[s] || s}</span>`;
+ }).join('');
+ }
+}
+function buyItem(itemId){
+ const un = getNowUser();
+ if(!un) return toast('❌ 请先登录');
+ let users = getUsers();
+ const u = users.find(x=>x.username===un);
+ if(!u) return;
+ const costs = {dark:200,effect1:500,star:800};
+ const cost = costs[itemId] || 0;
+ if(u.shop.includes(itemId)) return toast('⚠️ 已经拥有该道具了');
+ if(u.score < cost) return toast('❌ 积分不足');
+ u.score -= cost;
+ u.shop.push(itemId);
+ saveUsers(users);
+ refreshPageData();
+ toast('🎉 购买成功！');
+}
+
+// ====== IDE ======
+function runCode(){
+ const code = document.getElementById('codeEditor').value;
+ const outputBox = document.getElementById('codeOutput');
+ const outputText = document.getElementById('codeOutputText');
+ outputBox.style.display = 'block';
+ outputText.textContent = '⏳ 正在编译运行...';
+ setTimeout(() => {
+ const randomPass = Math.floor(Math.random() * 10) + 1;
+ const score = randomPass * 10;
+ const un = getNowUser();
+ if(un){
+ let users = getUsers();
+ const u = users.find(x=>x.username===un);
+ if(u) { u.score += score; saveUsers(users); }
+ const lines = code.split('\n').length;
+ outputText.textContent =
+ `📋 编译完成\n` +
+ `━━━━━━━━━━━━━━━━━━━━━\n` +
+ `  通过测试点：${randomPass}/10\n` +
+ `  代码行数：${lines} 行\n` +
+ `  得分：${score} / 100\n` +
+ `  获取积分：+${score}\n` +
+ `━━━━━━━━━━━━━━━━━━━━━\n` +
+ `✅ 已完成判分`;
+ refreshPageData();
+ } else {
+ outputText.textContent = `请先登录后再运行代码以获得积分。`;
+ }
+ }, 800);
+}
+
+// ====== 刷新页面 ======
+function refreshPageData(){
+ const un = getNowUser();
+ const loginBox = document.getElementById('loginBtnBox');
+ const userBox = document.getElementById('userInfoBox');
+ if(!un){
+ loginBox.classList.remove('hide');
+ userBox.classList.add('hide');
+ } else {
+ loginBox.classList.add('hide');
+ userBox.classList.remove('hide');
+ const userName = document.getElementById('userName');
+ const userScoreBadge = document.getElementById('userScoreBadge');
+ userName.textContent = un;
+ const users = getUsers();
+ const u = users.find(x => x.username === un);
+
+ if (u) {
+ // 个人中心更新
+ const displayName = document.getElementById('userDisplayName');
+ if (displayName) displayName.textContent = u.username;
+ const avatar = document.getElementById('userAvatar');
+ if (avatar) avatar.textContent = ['🧑','👨','🧑‍💻','👩‍💻','🤖','🦊','🐱','🐶'][u.username.length % 8];
+ const rank = document.getElementById('userRank');
+ if (rank) rank.textContent = getRank(u.score);
+ const score = document.getElementById('userScore');
+ if (score) score.textContent = u.score;
+ const sign = document.getElementById('userSign');
+ if (sign) sign.value = u.sign || '';
+ userScoreBadge.textContent = `⭐ ${u.score}`;
+ renderNote(u);
+ renderShop(u);
+ renderClassPanel(u);
+ // 打卡状态
+ const today = new Date().toDateString();
+ const clockTip = document.getElementById('clockTip');
+ const clockBtn = document.getElementById('clockBtn');
+ if (localStorage.getItem(`clock_${un}`) === today) {
+ clockTip.textContent = '✅ 今天已打卡！明天再来吧';
+ clockBtn.disabled = true;
+ clockBtn.style.opacity = 0.5;
+ } else {
+ clockTip.textContent = '📅 今日未打卡，打卡可获得 50 积分';
+ clockBtn.disabled = false;
+ clockBtn.style.opacity = 1;
+ }
+ }
+ }
+ // 主页数据
+ const totalUsers = document.getElementById('totalUsers');
+ if (totalUsers) totalUsers.textContent = getUsers().length;
+ const totalPosts = document.getElementById('totalPosts');
+ if (totalPosts) totalPosts.textContent = getDiscuss().length;
+ renderHomeRec();
+ renderDiscuss();
+ // 行号同步
+ syncLineNumbers();
+}
+
+// ====== IDE 行号 ======
+function syncLineNumbers(){
+ const editor = document.getElementById('codeEditor');
+ const nums = document.getElementById('lineNumbers');
+ if(!editor || !nums) return;
+ const lines = editor.value.split('\n').length;
+ nums.textContent = Array.from({length: lines}, (_, i) => i + 1).join('\n');
+}
+document.addEventListener('DOMContentLoaded', () => {
+ const editor = document.getElementById('codeEditor');
+ if(editor) {
+ editor.addEventListener('input', syncLineNumbers);
+ editor.addEventListener('scroll', () => {
+ document.getElementById('lineNumbers').scrollTop = editor.scrollTop;
+ });
+ }
+});
+
+// ====== 初始化 ======
+refreshPageData();
+</script>
+</body>
+</html>
