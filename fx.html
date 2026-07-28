@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GESP C++编程学习平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        /* 全局液态玻璃变量 */
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-dark: rgba(30, 30, 40, 0.35);
+            --glass-blur: blur(14px);
+            --border-light: rgba(255, 255, 255, 0.25);
+            --border-dark: rgba(255, 255, 255, 0.1);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            --primary: #4f46e5;
+            --primary-light: #818cf8;
+            --text-light: #ffffff;
+            --text-dark: #1f2937;
+            --card-radius: 16px;
+            --transition: all 0.3s ease;
+        }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+            background-attachment: fixed;
+            color: var(--text-light);
+            transition: var(--transition);
+        }
+        body.light-mode {
+            background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 50%, #c7d2fe 100%);
+            color: var(--text-dark);
+            --glass-bg: rgba(255, 255, 255, 0.45);
+            --glass-dark: rgba(255, 255, 255, 0.6);
+        }
+        /* 液态玻璃卡片通用样式 */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-light);
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            margin-bottom: 18px;
+            transition: var(--transition);
+        }
+        .glass:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+        }
+        /* 顶部导航栏玻璃 */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            height: 68px;
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            gap: 32px;
+            background: var(--glass-dark);
+            backdrop-filter: var(--glass-blur);
+            border-bottom: 1px solid var(--border-dark);
+        }
+        .nav-item {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: var(--transition);
+        }
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .container {
+            max-width: 1440px;
+            margin: 30px auto;
+            padding: 0 24px;
+        }
+        button {
+            padding: 9px 18px;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            cursor: pointer;
+            backdrop-filter: var(--glass-blur);
+            transition: var(--transition);
+        }
+        button:hover {
+            opacity: 0.9;
+            transform: scale(1.03);
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 11px;
+            margin: 10px 0;
+            border-radius: 10px;
+            border: 1px solid var(--border-light);
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            color: inherit;
+            outline: none;
+        }
+        .hide {
+            display: none !important;
+        }
+        .tab-bar {
+            display: flex;
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .tab {
+            padding: 8px 16px;
+            border-radius: 10px;
+            background: var(--glass-bg);
+            border: 1px solid var(--border-light);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .tab.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        }
+        .ide-box {
+            min-height: 320px;
+            font-family: Consolas, monospace;
+        }
+        .shop-item {
+            display: inline-block;
+            width: 190px;
+            padding: 16px;
+            margin: 10px;
+            text-align: center;
+        }
+        .rank-tag {
+            padding: 5px 12px;
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            border-radius: 20px;
+            color: #000;
+            font-weight: bold;
+        }
+        .discuss-item {
+            border-left: 3px solid var(--primary-light);
+            padding: 14px;
+            margin: 12px 0;
+        }
+        h2, h3, h4 {
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h2>GESP C++编程学习平台</h2>
+    <div class="nav-item" onclick="switchPage('home')">主页</div>
+    <div class="nav-item" onclick="switchPage('problem')">题库</div>
+    <div class="nav-item" onclick="switchPage('discuss')">讨论区</div>
+    <div class="nav-item" onclick="switchPage('user')">个人中心</div>
+    <div class="nav-item" onclick="switchPage('class')">班级</div>
+    <div class="nav-item" onclick="switchPage('shop')">积分商店</div>
+    <div class="nav-item" onclick="switchPage('ide')">在线IDE</div>
+    <div style="margin-left:auto;display:flex;gap:12px;align-items:center">
+        <button onclick="toggleLight()">切换浅色/深色</button>
+        <div id="loginBtnBox">
+            <button onclick="openLogin()">登录/注册</button>
+        </div>
+        <div id="userInfoBox" class="hide">
+            <span id="userName"></span>
+            <button onclick="logout()" style="margin-left:10px">退出</button>
+        </div>
+    </div>
+</header>
+<div class="container">
+    <!-- 登录弹窗 已删除超级管理员文字提示 -->
+    <div id="loginModal" class="glass hide">
+        <h3>账号登录 / 注册</h3>
+        <div class="tab-bar">
+            <div class="tab active" onclick="loginTab(0)">登录</div>
+            <div class="tab" onclick="loginTab(1)">注册</div>
+        </div>
+        <div id="loginPanel">
+            <input placeholder="用户名" id="loginUser">
+            <input placeholder="密码" type="password" id="loginPwd">
+            <button onclick="doLogin()">登录</button>
+        </div>
+        <div id="regPanel" class="hide">
+            <input placeholder="用户名" id="regUser">
+            <input placeholder="密码" type="password" id="regPwd">
+            <button onclick="doRegister()">注册</button>
+        </div>
+    </div>
+
+    <!-- 主页 -->
+    <div id="page-home">
+        <div class="glass">
+            <h3>每日打卡</h3>
+            <p id="clockTip">今日未打卡，打卡可获得50积分</p>
+            <button onclick="dailyClock()">立即打卡</button>
+        </div>
+        <div class="glass">
+            <h3>推荐中等难度题目</h3>
+            <div id="recomProblemList"></div>
+        </div>
+    </div>
+
+    <!-- 题库页面 -->
+    <div id="page-problem" class="hide">
+        <h3>GESP题库（1~8级 + 历年真题）</h3>
+        <div class="tab-bar" id="gespTabBar"></div>
+        <div id="problemListBox"></div>
+    </div>
+
+    <!-- 讨论区 -->
+    <div id="page-discuss" class="hide">
+        <h3>讨论广场</h3>
+        <div class="tab-bar">
+            <div class="tab active" data-type="chat">闲聊</div>
+            <div class="tab" data-type="help">求助</div>
+            <div class="tab" data-type="solve">解题分享</div>
+        </div>
+        <div class="glass">
+            <h4>发布帖子</h4>
+            <input placeholder="标题" id="postTitle">
+            <textarea placeholder="内容" id="postContent"></textarea>
+            <button onclick="publishPost()">发布帖子</button>
+        </div>
+        <div id="discussList"></div>
+    </div>
+
+    <!-- 个人中心 -->
+    <div id="page-user" class="hide">
+        <div class="glass">
+            <h3>个人资料</h3>
+            <p>当前段位：<span class="rank-tag" id="userRank"></span></p>
+            <p>总积分：<span id="userScore">0</span></p>
+            <p>个性签名：</p>
+            <textarea id="userSign"></textarea>
+            <button onclick="saveSign()">保存签名</button>
+        </div>
+        <div class="glass">
+            <h3>我的笔记</h3>
+            <textarea placeholder="新建笔记内容" id="noteContent"></textarea>
+            <div style="margin:8px 0">
+                <input type="radio" name="noteVis" value="public" checked>公开笔记
+                <input type="radio" name="noteVis" value="private">私密笔记
+            </div>
+            <button onclick="addNote()">保存笔记</button>
+            <div id="noteList"></div>
+        </div>
+    </div>
+
+    <!-- 班级管理 -->
+    <div id="page-class" class="hide">
+        <h3>班级中心</h3>
+        <!-- 仅FX账号可见，前端无管理员文字提示 -->
+        <div id="superAdminOpt" class="glass hide">
+            <h4>班级管理后台</h4>
+            <input placeholder="输入班级名称" id="createClassName">
+            <button onclick="createClass()">创建新班级</button>
+            <p>分配班级管理员：</p>
+            <input placeholder="填写用户名称" id="assignAdminUser">
+            <select id="classSelectAssign"></select>
+            <button onclick="assignClassAdmin()">分配管理员权限</button>
+        </div>
+        <div id="classAdminOpt" class="glass hide">
+            <h4>班级管理员功能</h4>
+            <button onclick="createTrain()">创建训练/比赛</button>
+        </div>
+        <div id="classList"></div>
+    </div>
+
+    <!-- 积分商店 -->
+    <div id="page-shop" class="hide">
+        <h3>积分商店（IDE皮肤、答题特效）</h3>
+        <div class="glass shop-item">
+            <h4>深色IDE背景</h4>
+            <p>消耗200积分</p>
+            <button onclick="buyItem('dark')">购买解锁</button>
+        </div>
+        <div class="glass shop-item">
+            <h4>彩虹答题特效</h4>
+            <p>消耗500积分</p>
+            <button onclick="buyItem('effect1')">购买解锁</button>
+        </div>
+        <div class="glass shop-item">
+            <h4>星空IDE背景</h4>
+            <p>消耗800积分</p>
+            <button onclick="buyItem('star')">购买解锁</button>
+        </div>
+        <div class="glass">
+            <h4>已拥有道具列表</h4>
+            <div id="ownShopList"></div>
+        </div>
+    </div>
+
+    <!-- 在线C++ IDE -->
+    <div id="page-ide" class="hide">
+        <div class="glass">
+            <h3>C++在线IDE（兼容VS / DEV-C++）</h3>
+            <select id="compilerSelect">
+                <option>Visual Studio C++</option>
+                <option>DEV-C++ MinGW</option>
+            </select>
+            <textarea class="ide-box" id="codeEditor" placeholder="在此编写C++代码">#include<iostream>
+using namespace std;
+int main(){
+    std::cout << "Hello GESP编程平台";
+    return 0;
+}</textarea>
+            <button onclick="runCode()">运行代码 & 自动判分</button>
+            <div class="glass" style="margin-top:16px">
+                <h4>程序运行输出</h4>
+                <div id="codeOutput"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 核心配置 超级管理员账号仅代码内存在，前端无任何展示
+const SENSITIVE = ["脏话","辱骂","色情","赌博","外挂","暴力","刷单","翻墙"];
+const RANK_LIST = [
+    {min:0,name:"铁牌"},{min:100,name:"铜牌"},{min:300,name:"银牌"},
+    {min:500,name:"金牌"},{min:800,name:"铂金"},{min:1200,name:"钻石"},
+    {min:1800,name:"超凡"},{min:2500,name:"不朽"},{min:3500,name:"辐射"}
+];
+const SUPER_USER = {username:"FX",password:"fx123456",isSuper:true};
+
+// 本地存储初始化
+function initStorage(){
+    if(!localStorage.getItem("userData")) localStorage.setItem("userData",JSON.stringify([SUPER_USER]));
+    if(!localStorage.getItem("nowUser")) localStorage.setItem("nowUser","");
+    if(!localStorage.getItem("problemData")) initProblem();
+    if(!localStorage.getItem("discussData")) localStorage.setItem("discussData",JSON.stringify([]));
+    if(!localStorage.getItem("classData")) localStorage.setItem("classData",JSON.stringify([]));
+}
+initStorage();
+
+// 初始化GESP题库（1~8级+历年真题）
+function initProblem(){
+    let list = [];
+    for(let lv=1;lv<=8;lv++){
+        for(let i=1;i<=50;i++) list.push({id:`G${lv}_${i}`,level:lv,type:"日常题",title:`GESP${lv}练习题${i}`,point:10,testTotal:10});
+        for(let y=2020;y<=2026;y++) list.push({id:`G${lv}_ZK${y}`,level:lv,type:"历年真题",title:`GESP${lv}${y}考级真题`,point:20,testTotal:10});
+    }
+    localStorage.setItem("problemData",JSON.stringify(list));
+}
+
+// 工具封装
+function getUsers(){return JSON.parse(localStorage.getItem("userData"))}
+function saveUsers(arr){localStorage.setItem("userData",JSON.stringify(arr))}
+function getNowUser(){return localStorage.getItem("nowUser")}
+function setNowUser(name){localStorage.setItem("nowUser",name)}
+function getProblems(){return JSON.parse(localStorage.getItem("problemData"))}
+function getDiscuss(){return JSON.parse(localStorage.getItem("discussData"))}
+function saveDiscuss(arr){localStorage.setItem("discussData",JSON.stringify(arr))}
+function getClass(){return JSON.parse(localStorage.getItem("classData"))}
+function saveClass(arr){localStorage.setItem("classData",JSON.stringify(arr))}
+
+// 敏感词检测
+function checkSensitive(str){
+    for(let w of SENSITIVE) if(str.includes(w)) return false;
+    return true;
+}
+// 积分转换无畏契约段位
+function getRank(score){
+    let r = RANK_LIST[0];
+    for(let item of RANK_LIST) if(score >= item.min) r=item;
+    return r.name;
+}
+
+// 明暗主题切换
+function toggleLight(){
+    document.body.classList.toggle("light-mode");
+}
+
+// 页面切换
+function switchPage(page){
+    document.querySelectorAll('[id^="page-"]').forEach(el=>el.classList.add("hide"));
+    document.getElementById(`page-${page}`).classList.remove("hide");
+    refreshPageData();
+}
+function refreshPageData(){
+    const un = getNowUser();
+    if(!un){
+        document.getElementById("loginBtnBox").classList.remove("hide");
+        document.getElementById("userInfoBox").classList.add("hide");
+    }else{
+        document.getElementById("loginBtnBox").classList.add("hide");
+        document.getElementById("userInfoBox").classList.remove("hide");
+        document.getElementById("userName").innerText = un;
+        const user = getUsers().find(u=>u.username===un);
+        document.getElementById("userRank").innerText = getRank(user.score);
+        document.getElementById("userScore").innerText = user.score;
+        document.getElementById("userSign").value = user.sign;
+        renderShop(user);
+        renderNote(user);
+        renderClassPanel(user);
+    }
+    renderHomeRec();
+    renderGespTab();
+    renderDiscuss();
+}
+
+// 登录弹窗控制
+function openLogin(){document.getElementById("loginModal").classList.toggle("hide")}
+function loginTab(t){
+    document.querySelectorAll("#loginModal .tab").forEach((tab,i)=>tab.classList.toggle("active",i===t));
+    document.getElementById("loginPanel").classList.toggle("hide",t!==0);
+    document.getElementById("regPanel").classList.toggle("hide",t!==1);
+}
+// 登录逻辑（FX管理员账号后台校验，前端无提示）
+function doLogin(){
+    const u = document.getElementById("loginUser").value.trim();
+    const p = document.getElementById("loginPwd").value.trim();
+    const users = getUsers();
+    const find = users.find(x=>x.username===u && x.password===p);
+    if(!find) return alert("账号或密码错误");
+    setNowUser(u);
+    document.getElementById("loginModal").classList.add("hide");
+    refreshPageData();
+    alert("登录成功");
+}
+// 注册逻辑
+function doRegister(){
+    const u = document.getElementById("regUser").value.trim();
+    const p = document.getElementById("regPwd").value.trim();
+    if(!u||!p) return alert("用户名和密码不能为空");
+    const users = getUsers();
+    if(users.find(x=>x.username===u)) return alert("该用户名已被注册");
+    users.push({
+        username:u,password:p,sign:"这个人很懒，暂无签名",score:0,
+        notes:[],shop:["light"],isSuper:false,manageClass:[]
+    });
+    saveUsers(users);
+    alert("注册完成，请登录账号");
+    loginTab(0);
+}
+function logout(){
+    setNowUser("");
+    refreshPageData();
+}
+
+// 每日打卡
+function dailyClock(){
+    const un = getNowUser();
+    if(!un) return alert("请先登录账号");
+    const today = new Date().toLocaleDateString();
+    if(localStorage.getItem(`clock_${un}`)===today) return alert("今日已经完成打卡，明天再来！");
+    let users = getUsers();
+    const u = users.find(x=>x.username===un);
+    u.score +=50;
+    saveUsers(users);
+    localStorage.setItem(`clock_${un}`,today);
+    refreshPageData();
+    alert("打卡完成，积分+50");
+}
+// 主页中等难度推荐题
+function renderHomeRec(){
+    const all = getProblems().filter(p=>p.level>=4&&p.level<=5).slice(0,6);
+    const box = document.getElementById("recomProblemList");
+    box.innerHTML = "";
+    all.forEach(item=>{
+        box.innerHTML += `<div class="glass">${item.title} <button onclick="openProblem('${item.id}')">前往刷题</button></div>`;
+    })
+}
+
+// GESP题库分级渲染
+function renderGespTab(){
+    const bar = document.getElementById("gespTabBar");
+    bar.innerHTML = "";
+    for(let i=1;i<=8;i++) bar.innerHTML += `<div class="tab" onclick="filterGesp(${i})">GESP${i}</div>`;
+}
+function filterGesp(lv){
+    const list = getProblems().filter(p=>p.level===lv);
+    const box = document.getElementById("problemListBox");
+    box.innerHTML = "";
+    list.forEach(item=>{
+        box.innerHTML += `
+        <div class="glass">
+            <h4>${item.title}</h4>
+            <p>单题积分：${item.point} | 测试点总数：${item.testTotal}</p>
+            <button onclick="openProblem('${item.id}')">开始做题判分</button>
+        </div>`;
+    })
+}
+function openProblem(pid){
+    alert("跳转在线IDE完成代码，运行后根据测试点通过率计算0-100分并增加对应积分");
+    switchPage("ide");
+}
+
+// 讨论区发布、点赞、评论、敏感词拦截
+function publishPost(){
+    const un = getNowUser();
+    if(!un) return alert("请登录后发布帖子");
+    const title = document.getElementById("postTitle").value.trim();
+    const cont = document.getElementById("postContent").value.trim();
+    const tabs = document.querySelectorAll("#page-discuss .tab.active");
+    const type = tabs[0].dataset.type;
+    if(!title||!cont) return alert("标题和内容不能为空");
+    if(!checkSensitive(title+cont)) return alert("内容包含违规敏感词，发布失败");
+    let dis = getDiscuss();
+    dis.unshift({
+        id:Date.now(),user:un,title,content:cont,type,
+        like:0,comment:[],time:new Date().toLocaleString()
+    });
+    saveDiscuss(dis);
+    document.getElementById("postTitle").value = "";
+    document.getElementById("postContent").value = "";
+    renderDiscuss();
+    alert("帖子发布成功");
+}
+function renderDiscuss(){
+    const box = document.getElementById("discussList");
+    box.innerHTML = "";
+    getDiscuss().forEach(item=>{
+        let comHtml = "";
+        item.comment.forEach(c=>comHtml += `<p class="glass" style="padding:8px;margin:6px 0">${c.user}：${c.msg}</p>`);
+        box.innerHTML += `
+        <div class="glass discuss-item">
+            <h4>${item.title}</h4>
+            <p>作者：${item.user} | 发布时间：${item.time} | 板块：${item.type==="chat"?"闲聊":item.type==="help"?"求助":"解题分享"}</p>
+            <p>${item.content}</p>
+            <p>点赞数：${item.like} <button onclick="likePost(${item.id})">点赞</button></p>
+            <div>${comHtml}</div>
+            <input placeholder="输入评论内容" id="c_${item.id}">
+            <button onclick="commentPost(${item.id})">发送评论</button>
+        </div>`;
+    })
+}
+function likePost(pid){
+    const un = getNowUser();
+    if(!un) return alert("登录后才能点赞");
+    let dis = getDiscuss();
+    const p = dis.find(x=>x.id===pid);
+    p.like +=1;
+    saveDiscuss(dis);
+    renderDiscuss();
+}
+function commentPost(pid){
+    const un = getNowUser();
+    if(!un) return alert("请先登录");
+    const msg = document.getElementById(`c_${pid}`).value.trim();
+    if(!msg||!checkSensitive(msg)) return alert("评论为空或包含违规内容");
+    let dis = getDiscuss();
+    const p = dis.find(x=>x.id===pid);
+    p.comment.push({user:un,msg});
+    saveDiscuss(dis);
+    renderDiscuss();
+}
+
+// 个人笔记（公开/私密）
+function saveSign(){
+    const un = getNowUser();
+    const text = document.getElementById("userSign").value;
+    let users = getUsers();
+    const u = users.find(x=>x.username===un);
+    u.sign = text;
+    saveUsers(users);
+    alert("个性签名保存成功");
+}
+function addNote(){
+    const un = getNowUser();
+    const cont = document.getElementById("noteContent").value.trim();
+    const vis = document.querySelector('input[name="noteVis"]:checked').value;
+    if(!cont) return alert("笔记内容不能为空");
+    let users = getUsers();
+    const u = users.find(x=>x.username===un);
+    u.notes.push({id:Date.now(),content:cont,visible:vis});
+    saveUsers(users);
+    document.getElementById("noteContent").value = "";
+    renderNote(u);
+    alert("笔记已保存");
+}
+function renderNote(user){
+    const box = document.getElementById("noteList");
+    box.innerHTML = "";
+    user.notes.forEach(n=>{
+        box.innerHTML += `<div class="glass">【${n.visible==="public"?"公开笔记":"私密笔记"}】${n.content}</div>`;
+    })
+}
+
+// 班级系统（仅FX超管可见创建/分配管理员）
+function renderClassPanel(user){
+    document.getElementById("superAdminOpt").classList.toggle("hide",!user.isSuper);
+    document.getElementById("classAdminOpt").classList.toggle("hide",user.manageClass.length===0);
+    const sel = document.getElementById("classSelectAssign");
+    sel.innerHTML = "";
+    getClass().forEach(c=>sel.innerHTML += `<option>${c.name}</option>`);
+    const listBox = document.getElementById("classList");
+    listBox.innerHTML = "";
+    getClass().forEach(c=>{
+        listBox.innerHTML += `<div class="glass"><h4>${c.name}</h4><p>班级管理员：${c.admin || "暂未分配"}</p></div>`;
+    })
+}
+function createClass(){
+    const name = document.getElementById("createClassName").value.trim();
+    if(!name) return alert("班级名称不能为空");
+    let cls = getClass();
+    cls.push({name,admin:"",train:[]});
+    saveClass(cls);
+    document.getElementById("createClassName").value = "";
+    refreshPageData();
+    alert("班级创建完成，可分配管理员");
+}
+function assignClassAdmin(){
+    const cName = document.getElementById("classSelectAssign").value;
+    const aUser = document.getElementById("assignAdminUser").value.trim();
+    const users = getUsers();
+    if(!users.find(x=>x.username===aUser)) return alert("该用户不存在");
+    let cls = getClass();
+    let targetClass = cls.find(c=>c.name===cName);
+    targetClass.admin = aUser;
+    let uItem = users.find(u=>u.username===aUser);
+    uItem.manageClass.push(cName);
+    saveClass(cls);
+    saveUsers(users);
+    alert("管理员分配完成");
+    refreshPageData();
+}
+function createTrain(){
+    alert("班级训练/比赛创建成功，班级内成员可见");
+}
+
+// 积分商店购买道具
+function renderShop(user){
+    const ownBox = document.getElementById("ownShopList");
+    ownBox.innerHTML = user.shop.join("、");
+}
+function buyItem(itemId){
+    const un = getNowUser();
+    let users = getUsers();
+    const u = users.find(x=>x.username===un);
+    let cost = 0;
+    if(itemId==="dark") cost=200;
+    if(itemId==="effect1") cost=500;
+    if(itemId==="star") cost=800;
+    if(u.shop.includes(itemId)) return alert("你已经拥有该道具，无需重复购买");
+    if(u.score < cost) return alert("当前积分不足，无法购买");
+    u.score -= cost;
+    u.shop.push(itemId);
+    saveUsers(users);
+    refreshPageData();
+    alert("道具购买解锁成功");
+}
+
+// IDE模拟运行判题
+function runCode(){
+    const outputBox = document.getElementById("codeOutput");
+    const randomPass = Math.floor(Math.random()*10)+1;
+    const score = randomPass*10;
+    const un = getNowUser();
+    if(un){
+        let users = getUsers();
+        const u = users.find(x=>x.username===un);
+        u.score += score;
+        saveUsers(users);
+    }
+    outputBox.innerText = `代码运行完成\n通过测试点：${randomPass}/10\n本次得分：${score} / 100`;
+    refreshPageData();
+}
+
+// 页面初始化渲染
+refreshPageData();
+</script>
+</body>
+</html>
